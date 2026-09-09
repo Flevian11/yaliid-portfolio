@@ -1,0 +1,69 @@
+# ============================================================
+# YaliID Portfolio - Root Git Ignore
+# ============================================================
+
+# ------------------------------------------------------------
+# Environment / secrets
+# ------------------------------------------------------------
+.env
+.env.*
+!.env.example
+
+# ------------------------------------------------------------
+# Laravel backend
+# ------------------------------------------------------------
+backend/vendor/
+backend/node_modules/
+
+backend/storage/*.key
+backend/storage/app/
+backend/storage/framework/
+backend/storage/logs/
+
+backend/public/storage
+
+# Laravel local database
+backend/database/*.sqlite
+backend/database/*.sqlite-journal
+
+# Laravel cache / generated files
+backend/bootstrap/cache/*.php
+
+# ------------------------------------------------------------
+# React / Vite frontend
+# ------------------------------------------------------------
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# ------------------------------------------------------------
+# Logs
+# ------------------------------------------------------------
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# ------------------------------------------------------------
+# OS files
+# ------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ------------------------------------------------------------
+# IDE / editor
+# ------------------------------------------------------------
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+.idea/
+*.swp
+*.swo
+
+# ------------------------------------------------------------
+# Temporary files
+# ------------------------------------------------------------
+*.tmp
+*.temp
