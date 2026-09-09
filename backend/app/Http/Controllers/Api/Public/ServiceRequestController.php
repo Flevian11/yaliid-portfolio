@@ -1,0 +1,4 @@
+<?php
+namespace App\Http\Controllers\Api\Public;
+use App\Http\Controllers\Controller; use App\Models\ServiceRequest; use Illuminate\Http\Request; use Illuminate\Http\JsonResponse; use Illuminate\Support\Str;
+class ServiceRequestController extends Controller { public function store(Request $request): JsonResponse { $data=$request->validate(['service_id'=>'required|exists:services,id','name'=>'required|string|max:150','email'=>'required|email|max:190','phone'=>'nullable|string|max:50','company'=>'nullable|string|max:150','description'=>'required|string|max:10000','budget'=>'nullable|numeric|min:0','preferred_deadline'=>'nullable|date','priority'=>'nullable|in:low,normal,high']); $data['reference']='YALI-SR-'.strtoupper(Str::random(8)); $data['status']='new'; $data['priority']=$data['priority']??'normal'; $item=ServiceRequest::create($data); return response()->json(['message'=>'Service request received.','reference'=>$item->reference],201); } }
