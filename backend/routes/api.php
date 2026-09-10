@@ -26,6 +26,9 @@ Route::prefix('v1')->group(function(){
  Route::apiResource('settings',\App\Http\Controllers\Api\Admin\SiteSettingController::class);
  Route::apiResource('service-requests',\App\Http\Controllers\Api\Admin\ServiceRequestController::class)->only(['index','show','update','destroy']);
  Route::apiResource('messages',\App\Http\Controllers\Api\Admin\ContactMessageController::class)->only(['index','show','update','destroy']);
- Route::apiResource('recommendation-letters',\App\Http\Controllers\Api\Admin\RecommendationLetterController::class)->only(['index','store','destroy']);
+Route::apiResource(
+    'recommendation-letters',
+    \App\Http\Controllers\Api\Admin\RecommendationLetterController::class
+);
 });
 });
