@@ -134,9 +134,19 @@ export default function Home({ data }: { data: PortfolioData }) {
           <div className="project-grid project-grid--home">
             {projects.slice(0, 3).map((project, index) => (
               <Link className="project-card" to={`/projects/${project.slug}`} key={project.id}>
-                <div className="project-card__head"><span>0{index + 1}</span><span>{project.project_type || 'PROJECT'}</span></div>
-                <div><h3>{project.title}</h3><p>{project.short_description || project.description || 'A practical digital system built around a real requirement.'}</p></div>
-                <span className="project-card__link">Explore <ArrowUpRight size={15} /></span>
+                <div className="project-card__head">
+                  <span className="project-card__number">0{index + 1}</span>
+                  <span className="project-card__type">{project.project_type || 'PROJECT'}</span>
+                </div>
+                <div className="project-card__body">
+                  <span className="project-card__eyebrow">SELECTED WORK / {String(index + 1).padStart(2, '0')}</span>
+                  <h3>{project.title}</h3>
+                  <p>{project.short_description || project.description || 'A practical digital system built around a real requirement.'}</p>
+                </div>
+                <div className="project-card__footer">
+                  <span className="project-card__link">Explore project <ArrowUpRight size={15} /></span>
+                  <span className="project-card__mark" aria-hidden="true">027</span>
+                </div>
               </Link>
             ))}
           </div>

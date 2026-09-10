@@ -284,7 +284,10 @@ function SubmissionPage({ service }: { service?: Service[] }) {
     event.preventDefault();
     setStatus('sending');
     const form = new FormData(event.currentTarget);
-    const payload = Object.fromEntries(form.entries());
+    const payload: Record<string, string> = {};
+    form.forEach((value, key) => {
+      payload[key] = String(value);
+    });
 
     try {
       if (isService) await portfolioApi.request(payload);

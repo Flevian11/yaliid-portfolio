@@ -5,23 +5,14 @@ import Footer from './components/Footer';
 import { portfolioApi } from './api';
 import type { PortfolioData } from './types';
 import Home from './pages/Home';
-import { About, Experience, Projects, Services, CV, RequestService, Contact } from './pages/Pages';
+import { About, Projects, RequestService, Contact } from './pages/Pages';
+import Experience from './pages/Experience';
+import Services from './pages/Services';
+import CV from './pages/CV';
 import ProjectDetail from './pages/ProjectDetail';
 import AdminApp, { AdminLogin } from './admin/AdminApp';
 import './App.css';
 import './admin/Admin.css';
-
-const emptyPortfolio: PortfolioData = {
-  profile: null,
-  experiences: [],
-  education: [],
-  certifications: [],
-  skills: [],
-  projects: [],
-  services: [],
-  advertisements: [],
-  testimonials: [],
-};
 
 function normalizePortfolio(payload: Partial<PortfolioData> | null | undefined): PortfolioData {
   return {
