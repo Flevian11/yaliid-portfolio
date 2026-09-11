@@ -38,6 +38,195 @@ function ScrollToTop() {
   return null;
 }
 
+
+function SeoHead({ data }: { data: PortfolioData | null }) {
+  const location = useLocation();
+
+  useEffect(() => {
+    const profile = data?.profile;
+    const name = profile?.full_name || 'Flevian Ochoka';
+    const professionalTitle = profile?.professional_title || 'Software Engineer';
+    const summary = profile?.professional_summary || profile?.bio || profile?.tagline ||
+      'Flevian Ochoka is a software engineer and digital systems builder creating practical web applications, business systems and digital products.';
+
+    const path = location.pathname.replace(/\/+$/, '') || '/';
+    const project = path.startsWith('/projects/')
+      ? data?.projects.find((item) => `/projects/${item.slug}` === path)
+      : undefined;
+
+    const pageMeta: Record<string, { title: string; description: string }> = {
+      '/': {
+        title: `${name} — Software Engineer, TechGhost | Digital Systems & Web Development`,
+        description: `${name} is a ${professionalTitle} who designs and builds practical digital systems, web applications, business software and digital products.`,
+      },
+      '/about': {
+        title: `About ${name} — Software Engineer & Digital Systems Builder`,
+        description: `Learn about ${name}, a software engineer focused on practical software systems, web development, digital products and technology solutions.`,
+      },
+      '/experience': {
+        title: `${name} — Professional Experience | Software Engineering`,
+        description: `Explore ${name}'s professional experience, engineering roles, responsibilities, achievements and software systems built across real-world projects.`,
+      },
+      '/projects': {
+        title: `${name} — Projects | Software, Web & Digital Products`,
+        description: `Explore software projects and digital products built by ${name}, including web applications, business systems, platforms, simulations and AI-powered solutions.`,
+      },
+      '/services': {
+        title: `${name} — Software Development & Digital Services`,
+        description: `Work with ${name} on custom software systems, web applications, digital products, interfaces and practical technology solutions.`,
+      },
+      '/cv': {
+        title: `${name} — CV | Software Engineer`,
+        description: `${name}'s curriculum vitae, professional experience, education, certifications, skills and software engineering background.`,
+      },
+      '/request-service': {
+        title: `Start a Project with ${name} — Software Development`,
+        description: `Request a software, web development or digital product project from ${name} and turn a real requirement into a useful system.`,
+      },
+      '/contact': {
+        title: `Contact ${name} — TechGhost`,
+        description: `Contact ${name} about software engineering, web development, digital systems, technology projects or collaboration.`,
+      },
+    };
+
+    const meta = project
+      ? {
+          title: `${project.title} — ${name} | TechGhost`,
+          description: project.short_description || project.description ||
+            `View ${project.title}, a software and digital product project by ${name}.`,
+        }
+      : pageMeta[path] || {
+          title: `${name} — ${professionalTitle} | TechGhost`,
+          description: summary,
+        };
+
+    const canonicalUrl = `${window.location.origin}${path}`;
+
+    document.title = meta.title;
+
+    const setMeta = (nameOrProperty: string, content: string, property = false) => {
+      const selector = property
+        ? `meta[property="${nameOrProperty}"]`
+        : `meta[name="${nameOrProperty}"]`;
+      let element = document.head.querySelector<HTMLMetaElement>(selector);
+      if (!element) {
+        element = document.createElement('meta');
+        if (property) element.setAttribute('property', nameOrProperty);
+        else element.setAttribute('name', nameOrProperty);
+        document.head.appendChild(element);
+      }
+      element.setAttribute('content', content);
+    };
+
+    const setLink = (rel: string, href: string) => {
+      let element = document.head.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
+      if (!element) {
+        element = document.createElement('link');
+        element.setAttribute('rel', rel);
+        document.head.appendChild(element);
+      }
+      element.setAttribute('href', href);
+    };
+
+    const isAdmin = path.startsWith('/admin');
+    setMeta('description', isAdmin ? 'Private administration area.' : meta.description);
+    setMeta('author', name);
+    setMeta('creator', name);
+    setMeta('publisher', name);
+    setMeta('robots', isAdmin
+      ? 'noindex,nofollow,noarchive'
+      : 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1');
+    setMeta('googlebot', isAdmin
+      ? 'noindex,nofollow,noarchive'
+      : 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1');
+
+    if (!isAdmin) {
+      setMeta(
+        'keywords',
+        `${name}, Flevian Ochoka software engineer, Flevian Ochoka developer, TechGhost, software engineer Nairobi, Kenya software developer, web developer, custom software development, digital systems, web applications, business software, artificial intelligence, digital product development`
+      );
+    }
+
+    setMeta('og:title', meta.title, true);
+    setMeta('og:description', meta.description, true);
+    setMeta('og:type', project ? 'article' : 'website', true);
+    setMeta('og:url', canonicalUrl, true);
+    setMeta('og:site_name', 'Flevian Ochoka — TechGhost', true);
+    setMeta('twitter:card', 'summary', false);
+    setMeta('twitter:title', meta.title, false);
+    setMeta('twitter:description', meta.description, false);
+    setLink('canonical', canonicalUrl);
+
+    const existing = document.head.querySelector<HTMLScriptElement>('script[data-seo-jsonld]');
+    if (existing) existing.remove();
+
+    if (!isAdmin) {
+      const skills = (data?.skills || []).flatMap((category) =>
+        category.skills.map((skill) => skill.name)
+      );
+
+      const graph: Record<string, unknown>[] = [
+        {
+          '@type': 'Person',
+          '@id': `${window.location.origin}/#person`,
+          name,
+          url: `${window.location.origin}/`,
+          jobTitle: professionalTitle,
+          description: summary,
+          address: profile?.location ? {
+            '@type': 'PostalAddress',
+            addressLocality: profile.location,
+            addressCountry: 'KE',
+          } : undefined,
+          sameAs: [
+            'https://github.com/Flevian11',
+            'https://www.reddit.com/user/Budget_Background713/',
+          ],
+          knowsAbout: skills.length ? skills : [
+            'Software engineering',
+            'Web development',
+            'Digital systems',
+            'Business software',
+            'Artificial intelligence',
+            'Digital product development',
+          ],
+        },
+        {
+          '@type': 'WebSite',
+          '@id': `${window.location.origin}/#website`,
+          url: `${window.location.origin}/`,
+          name: 'Flevian Ochoka — TechGhost',
+          description: 'Portfolio of Flevian Ochoka — software engineer and digital systems builder.',
+          publisher: { '@id': `${window.location.origin}/#person` },
+          inLanguage: 'en-KE',
+        },
+      ];
+
+      if (project) {
+        graph.push({
+          '@type': 'CreativeWork',
+          '@id': `${canonicalUrl}#project`,
+          name: project.title,
+          url: canonicalUrl,
+          description: project.description || project.short_description || '',
+          creator: { '@id': `${window.location.origin}/#person` },
+        });
+      }
+
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.dataset.seoJsonld = 'true';
+      script.textContent = JSON.stringify({
+        '@context': 'https://schema.org',
+        '@graph': graph,
+      });
+      document.head.appendChild(script);
+    }
+  }, [data, location.pathname]);
+
+  return null;
+}
+
 function PublicLayout({ data }: { data: PortfolioData }) {
   return (
     <div className="site-shell">
@@ -103,6 +292,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <SeoHead data={data} />
       <Routes>
         <Route path="/admin/*" element={<AdminRoutes />} />
         <Route
