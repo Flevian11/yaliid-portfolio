@@ -58,25 +58,25 @@ export default function Dashboard() {
 
       <div className="dashboard-content-grid">
         <div className="admin-panel dashboard-content-panel">
-          <PanelTitle title="Recent content" action={<span className="panel-link">View all</span>}/>
-          {data?.recent_content?.length ? <div className="dashboard-list">{data.recent_content.map((x:any)=><div className="dashboard-list-row" key={`${x.type}-${x.id}`}>
+          <PanelTitle title="Recent content" action={<span className="panel-link panel-link--muted">Click an item to manage</span>}/>
+          {data?.recent_content?.length ? <div className="dashboard-list">{data.recent_content.map((x:any)=><button className="dashboard-list-row dashboard-list-row--clickable" key={`${x.type}-${x.id}`} onClick={()=>nav(contentPath(x.type))} aria-label={`Open ${x.type_label}: ${x.title}`}>
             <span className={`content-icon content-icon--${x.type}`}><IconFor type={x.type}/></span>
             <span className="dashboard-list-main"><strong>{x.title}</strong><small>{x.type_label}</small></span>
             <span className="dashboard-list-time">{age(x.updated_at)}</span>
             <span className={`status status-${x.is_published ? 'published':'draft'}`}>{x.is_published?'Published':'Draft'}</span>
             <ChevronRight size={16}/>
-          </div>)}</div> : <EmptyState icon={FolderKanban} title="No recent content yet" description="Your latest projects, experience, skills and other records will appear here."/>}
+          </button>)}</div> : <EmptyState icon={FolderKanban} title="No recent content yet" description="Your latest projects, experience, skills and other records will appear here."/>}
         </div>
 
         <div className="admin-panel dashboard-content-panel">
-          <PanelTitle title="Recent messages" action={<span className="panel-link">View all</span>}/>
-          {data?.recent_messages?.length ? <div className="dashboard-list">{data.recent_messages.map((x:any)=><div className="dashboard-list-row" key={x.id}>
+          <PanelTitle title="Recent messages" action={<button className="panel-link panel-link--button" onClick={()=>nav('/admin/messages')}>View all</button>}/>
+          {data?.recent_messages?.length ? <div className="dashboard-list">{data.recent_messages.map((x:any)=><button className="dashboard-list-row dashboard-list-row--clickable" key={x.id} onClick={()=>nav(`/admin/messages?message=${x.id}`)} aria-label={`Open message from ${x.name || x.email || 'contact'}`}>
             <span className="message-avatar">{String(x.name||'A').slice(0,2).toUpperCase()}</span>
             <span className="dashboard-list-main"><strong>{x.name || x.subject || 'Contact message'}</strong><small>{x.message || x.subject || x.email || 'New message'}</small></span>
             <span className="dashboard-list-time">{age(x.created_at)}</span>
             <span className={`status status-${String(x.status||'new').replaceAll('_','-')}`}>{String(x.status||'new').replaceAll('_',' ')}</span>
             <ChevronRight size={16}/>
-          </div>)}</div> : <EmptyState icon={MessageSquare} title="Your inbox is empty" description="New messages sent through the public portfolio will appear here."/>}
+          </button>)}</div> : <EmptyState icon={MessageSquare} title="Your inbox is empty" description="New messages sent through the public portfolio will appear here."/>}
         </div>
       </div>
 
@@ -89,6 +89,21 @@ export default function Dashboard() {
     </AdminPage>
   );
 }
+function contentPath(type:string) {
+  const paths: Record<string,string> = {
+    project: '/admin/projects',
+    experience: '/admin/experience',
+    certification: '/admin/certifications',
+    skill: '/admin/skills',
+    service: '/admin/services',
+    education: '/admin/education',
+    achievement: '/admin/achievements',
+    testimonial: '/admin/testimonials',
+    advertisement: '/admin/advertisements',
+  };
+  return paths[type] || '/admin';
+}
+
 function IconFor({type}:{type:string}) {
   if(type==='project') return <FolderKanban size={18}/>;
   if(type==='experience') return <BriefcaseBusiness size={18}/>;

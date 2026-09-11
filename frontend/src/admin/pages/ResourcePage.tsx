@@ -126,7 +126,7 @@ function EditorModal({ config, item, onClose, onSaved }: { config:ResourceConfig
 
   return (
     <>
-    <div className="modal-backdrop">
+    <div className="modal-backdrop" onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <div className="admin-modal admin-modal--large">
         <div className="modal-head">
           <div><small>{item ? 'EDIT RECORD' : 'NEW RECORD'}</small><h2>{item ? 'Edit' : 'Add'} {config.singular}</h2><p>Update the information used by the public portfolio.</p></div>

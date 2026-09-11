@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Inbox, MessageSquare, Trash2, Mail, Clock3, Building2, Banknote, CalendarDays, Flag } from 'lucide-react';
 import AdminPage from '../components/AdminPage';
 import EmptyState from '../components/EmptyState';
@@ -26,8 +27,20 @@ export default function InboxPages({mode}:{mode:'requests'|'messages'}) {
   const [selected,setSelected]=useState<any|null>(null);
   const [feedback,setFeedback]=useState<any>(null);
   const [confirm,setConfirm]=useState(false);
+  const [searchParams,setSearchParams]=useSearchParams();
   const load=async()=>{try{const r=await api.get(isRequests?'/admin/service-requests':'/admin/messages');setRows(Array.isArray(r.data)?r.data:(r.data?.data||[]));}catch(e:any){setFeedback({kind:'error',title:'Could not load inbox',message:friendlyError(e,'The inbox could not be loaded. Please try again.')});}};
   useEffect(()=>{void load();},[mode]);
+
+  useEffect(() => {
+    if (isRequests || !rows.length || selected) return;
+    const messageId = Number(searchParams.get('message'));
+    if (!Number.isInteger(messageId) || messageId <= 0) return;
+    void open(messageId).finally(() => {
+      const next = new URLSearchParams(searchParams);
+      next.delete('message');
+      setSearchParams(next, { replace: true });
+    });
+  }, [rows, isRequests, selected, searchParams, setSearchParams]);
 
   const open=async(id:number)=>{try{const r=await api.get(`${isRequests?'/admin/service-requests':'/admin/messages'}/${id}`);setSelected(r.data);if(!isRequests){const row=rows.find(x=>x.id===id);if(row?.status==='unread') await api.patch(`/admin/messages/${id}`,{status:'read'});}}catch(e:any){if(e?.response?.status===404){setSelected(null);await load();}setFeedback({kind:'error',title:'Could not open this item',message:friendlyError(e,'We could not open this item right now. Please try again.')});}};
   const update=async(patch:any)=>{if(!selected)return;try{const r=await api.patch(`${isRequests?'/admin/service-requests':'/admin/messages'}/${selected.id}`,patch);setSelected(r.data);await load();setFeedback({kind:'success',title:'Updated successfully',message:isRequests?'The service request has been updated.':'The message status has been updated.'});}catch(e:any){if(e?.response?.status===404){setSelected(null);await load();}setFeedback({kind:'error',title:isRequests?'Couldn’t update request':'Couldn’t update message',message:friendlyError(e,isRequests?'We couldn’t save that request. It may have been removed or is no longer available.':'We couldn’t save that message right now. Please try again.')});}};

@@ -132,7 +132,7 @@ export default function AdminShell({ user, children }: { user: any; children: Re
       </div>
 
       {logoutOpen && (
-        <div className="modal-backdrop">
+        <div className="modal-backdrop" onClick={(event) => { if (event.target === event.currentTarget) setLogoutOpen(false); }}>
           <div className="feedback-modal feedback-modal--warning">
             <div className="feedback-icon"><LogOut /></div>
             <small className="feedback-kicker">SECURE SESSION</small>

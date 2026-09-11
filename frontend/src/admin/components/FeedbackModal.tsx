@@ -12,7 +12,7 @@ export default function FeedbackModal({
 }) {
   const Icon = icons[kind];
   return (
-    <div className="modal-backdrop" role="presentation">
+    <div className="modal-backdrop" role="presentation" onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <div className={`feedback-modal feedback-modal--${kind}`} role="dialog" aria-modal="true" aria-labelledby="feedback-title">
         <button className="modal-close" onClick={onClose} aria-label="Close"><X size={18} /></button>
         <div className="feedback-icon"><Icon /></div>
@@ -34,7 +34,7 @@ export function ConfirmModal({
   title: string; message: string; confirmLabel?: string; danger?: boolean; onCancel: () => void; onConfirm: () => void; loading?: boolean;
 }) {
   return (
-    <div className="modal-backdrop" role="presentation">
+    <div className="modal-backdrop" role="presentation" onClick={(event) => { if (event.target === event.currentTarget) onCancel(); }}>
       <div className={`feedback-modal feedback-modal--${danger ? 'error' : 'warning'}`} role="dialog" aria-modal="true">
         <button className="modal-close" onClick={onCancel} aria-label="Close"><X size={18} /></button>
         <div className="feedback-icon"><AlertTriangle /></div>
