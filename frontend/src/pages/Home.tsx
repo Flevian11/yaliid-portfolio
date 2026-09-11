@@ -1,5 +1,6 @@
-import { ArrowDownRight, ArrowUpRight, Code2, Layers3, Sparkles } from 'lucide-react';
+import { ArrowDownRight, ArrowLeft, ArrowRight, ArrowUpRight, Code2, Layers3, Quote, Sparkles, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import SectionLabel from '../components/SectionLabel';
 import type { PortfolioData } from '../types';
 
@@ -14,7 +15,25 @@ const fallbackProfile = {
 export default function Home({ data }: { data: PortfolioData }) {
   const profile = data.profile ?? fallbackProfile;
   const projects = Array.isArray(data.projects) ? data.projects : [];
-  const advertisement = data.advertisements?.[0];
+  const advertisements = Array.isArray(data.advertisements) ? data.advertisements : [];
+  const testimonials = Array.isArray(data.testimonials) ? data.testimonials : [];
+  const [testimonialIndex, setTestimonialIndex] = useState(0);
+
+  useEffect(() => {
+    if (testimonials.length <= 1) return;
+    const timer = window.setInterval(() => {
+      setTestimonialIndex((current) => (current + 1) % testimonials.length);
+    }, 6000);
+    return () => window.clearInterval(timer);
+  }, [testimonials.length]);
+
+  useEffect(() => {
+    if (testimonialIndex >= testimonials.length && testimonials.length) {
+      setTestimonialIndex(0);
+    }
+  }, [testimonialIndex, testimonials.length]);
+
+  const testimonial = testimonials[testimonialIndex];
 
   return (
     <>
@@ -131,6 +150,7 @@ export default function Home({ data }: { data: PortfolioData }) {
         </div>
 
         {projects.length ? (
+          <>
           <div className="project-grid project-grid--home">
             {projects.slice(0, 3).map((project, index) => (
               <Link className="project-card" to={`/projects/${project.slug}`} key={project.id}>
@@ -150,25 +170,81 @@ export default function Home({ data }: { data: PortfolioData }) {
               </Link>
             ))}
           </div>
+          {projects.length > 3 && (
+            <Link className="home-project-more" to="/projects">+{projects.length - 3} more <ArrowUpRight size={14} /></Link>
+          )}
+          </>
         ) : (
           <div className="home-empty"><span>PROJECTS / 00</span><strong>Selected work is being prepared.</strong><p>Published projects will appear here.</p></div>
         )}
       </section>
 
-      {advertisement && (
+      {advertisements.length > 0 && (
         <section className="container home-ad-wrap">
-          <a className="home-ad" href={advertisement.destination_url || '#'} target="_blank" rel="noreferrer">
-            {advertisement.image_path && <img src={advertisement.image_path} alt={advertisement.title} loading="lazy" />}
-            <div><SectionLabel>FEATURED</SectionLabel><h3>{advertisement.title}</h3><p>{advertisement.description}</p></div>
-            <ArrowUpRight />
-          </a>
+          {advertisements.map((advertisement) => (
+            <a
+              className="home-ad"
+              href={advertisement.destination_url || undefined}
+              target={advertisement.destination_url ? '_blank' : undefined}
+              rel={advertisement.destination_url ? 'noreferrer' : undefined}
+              key={advertisement.id}
+            >
+              {advertisement.image_path && <img src={advertisement.image_path} alt={advertisement.title} loading="lazy" />}
+              <div><SectionLabel>FEATURED</SectionLabel><h3>{advertisement.title}</h3><p>{advertisement.description}</p></div>
+              {advertisement.destination_url && <ArrowUpRight />}
+            </a>
+          ))}
+        </section>
+      )}
+
+      {testimonials.length > 0 && testimonial && (
+        <section className="home-testimonials">
+          <div className="container">
+            <div className="home-section-heading">
+              <div>
+                <SectionLabel>05 / TESTIMONIALS</SectionLabel>
+                <h2>Words from<br /><em>the people I work with.</em></h2>
+              </div>
+              {testimonials.length > 1 && (
+                <div className="home-testimonials__controls">
+                  <button type="button" aria-label="Previous testimonial" onClick={() => setTestimonialIndex((testimonialIndex - 1 + testimonials.length) % testimonials.length)}><ArrowLeft size={16} /></button>
+                  <span>{String(testimonialIndex + 1).padStart(2, '0')} / {String(testimonials.length).padStart(2, '0')}</span>
+                  <button type="button" aria-label="Next testimonial" onClick={() => setTestimonialIndex((testimonialIndex + 1) % testimonials.length)}><ArrowRight size={16} /></button>
+                </div>
+              )}
+            </div>
+
+            <article className="home-testimonial">
+              <div className="home-testimonial__quote"><Quote size={28} /></div>
+              <div className="home-testimonial__content">
+                {testimonial.rating && (
+                  <div className="home-testimonial__rating" aria-label={`${testimonial.rating} out of 5 stars`}>
+                    {Array.from({ length: 5 }).map((_, index) => <Star key={index} size={15} fill={index < testimonial.rating! ? 'currentColor' : 'none'} />)}
+                  </div>
+                )}
+                <blockquote>“{testimonial.content}”</blockquote>
+                <div className="home-testimonial__person">
+                  {testimonial.photo ? <img src={testimonial.photo} alt={testimonial.name} /> : <span>{testimonial.name.slice(0, 1).toUpperCase()}</span>}
+                  <div><strong>{testimonial.name}</strong><small>{[testimonial.position, testimonial.organization].filter(Boolean).join(' · ')}</small></div>
+                </div>
+              </div>
+            </article>
+
+            {testimonials.length > 1 && (
+              <div className="home-testimonials__dots" aria-label="Testimonial navigation">
+                {testimonials.map((item, index) => (
+                  <button key={item.id} type="button" className={index === testimonialIndex ? 'active' : ''} aria-label={`Show testimonial ${index + 1}`} onClick={() => setTestimonialIndex(index)} />
+                ))}
+              </div>
+            )}
+          </div>
         </section>
       )}
 
       <section className="home-closing">
         <div className="home-closing__watermark" aria-hidden="true">27</div>
         <div className="container home-closing__inner">
-          <SectionLabel>05 / LET'S BUILD</SectionLabel>
+          <SectionLabel>{testimonials.length > 0 ? '06' : '05'} / LET'S BUILD</SectionLabel>
           <h2>Have a real problem?<br /><em>Let's build the right system.</em></h2>
           <div className="home-closing__row">
             <p>Tell me what needs to work better. We can turn the requirement into a clear, useful digital product.</p>

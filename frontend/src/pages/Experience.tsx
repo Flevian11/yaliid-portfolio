@@ -1,4 +1,4 @@
-import { ArrowUpRight, CheckCircle2, FileText } from 'lucide-react';
+import { ArrowUpRight, CheckCircle2, Download } from 'lucide-react';
 import type { Experience as ExperienceItem, PortfolioData } from '../types';
 import SectionLabel from '../components/SectionLabel';
 
@@ -54,8 +54,8 @@ function ExperienceRow({ item, index }: { item: ExperienceItem; index: number })
           <div className="document-links">
             {item.recommendation_letters.map((letter) => (
               <a href={letter.file_path} target="_blank" rel="noreferrer" key={letter.id}>
-                <FileText size={15} aria-hidden="true" />
-                {letter.title || 'Recommendation letter'}
+                <Download size={15} aria-hidden="true" />
+                Download {letter.title || 'recommendation letter'}
                 <ArrowUpRight size={14} aria-hidden="true" />
               </a>
             ))}

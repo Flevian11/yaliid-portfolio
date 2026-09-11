@@ -1,4 +1,4 @@
-import { ArrowUpRight, Download } from 'lucide-react';
+import { ArrowUpRight, CheckCircle2, Download, FileText } from 'lucide-react';
 import type { PortfolioData, Profile } from '../types';
 import SectionLabel from '../components/SectionLabel';
 
@@ -70,14 +70,37 @@ export default function CV({ data }: { data: PortfolioData }) {
           </div>
           <div className="cv-items">
             {data.experiences.length ? data.experiences.map((item) => (
-              <div className="cv-item" key={item.id}>
-                <div><span>{formatDate(item.start_date)} — {item.is_current ? 'Present' : formatDate(item.end_date)}</span></div>
-                <div>
+              <article className="cv-item cv-item--experience" key={item.id}>
+                <div className="cv-item__period"><span>{formatDate(item.start_date)} — {item.is_current ? 'Present' : formatDate(item.end_date)}</span></div>
+                <div className="cv-item__body">
                   <strong>{item.position}</strong>
                   <p>{item.organization}{item.location ? ` · ${item.location}` : ''}</p>
                   {(item.description || item.summary) && <small>{item.description || item.summary}</small>}
+
+                  {item.achievements?.length ? (
+                    <ul className="cv-achievement-list">
+                      {item.achievements.map((achievement) => (
+                        <li key={achievement.id}>
+                          <CheckCircle2 size={15} aria-hidden="true" />
+                          <span><strong>{achievement.title}</strong>{achievement.description ? ` — ${achievement.description}` : ''}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+
+                  {item.recommendation_letters?.length ? (
+                    <div className="document-links cv-document-links">
+                      {item.recommendation_letters.map((letter) => (
+                        <a href={letter.file_path} target="_blank" rel="noreferrer" key={letter.id}>
+                          <FileText size={15} aria-hidden="true" />
+                          Download {letter.title || 'recommendation letter'}
+                          <ArrowUpRight size={14} aria-hidden="true" />
+                        </a>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
-              </div>
+              </article>
             )) : (
               <EmptyState title="Experience is being prepared." text="Published experience entries will appear here." />
             )}
@@ -118,19 +141,28 @@ export default function CV({ data }: { data: PortfolioData }) {
           </div>
           <div className="cv-items">
             {data.certifications.length ? data.certifications.map((item) => (
-              <div className="cv-item" key={item.id}>
+              <article className="cv-item cv-item--certification" key={item.id}>
                 <div><span>{formatDate(item.issue_date)}</span></div>
                 <div>
                   <strong>{item.name}</strong>
                   <p>{item.issuing_organization}</p>
                   {item.credential_id && <small>Credential {item.credential_id}</small>}
-                  {item.credential_url && (
-                    <a href={item.credential_url} target="_blank" rel="noreferrer">
-                      Verify credential <ArrowUpRight size={13} aria-hidden="true" />
-                    </a>
-                  )}
+                  <div className="cv-document-actions">
+                    {item.certificate_file && (
+                      <a href={item.certificate_file} target="_blank" rel="noreferrer">
+                        <Download size={14} aria-hidden="true" />
+                        Download certificate
+                        <ArrowUpRight size={13} aria-hidden="true" />
+                      </a>
+                    )}
+                    {item.credential_url && (
+                      <a href={item.credential_url} target="_blank" rel="noreferrer">
+                        Verify credential <ArrowUpRight size={13} aria-hidden="true" />
+                      </a>
+                    )}
+                  </div>
                 </div>
-              </div>
+              </article>
             )) : (
               <EmptyState title="Certifications are being prepared." text="Published certification entries will appear here." />
             )}
