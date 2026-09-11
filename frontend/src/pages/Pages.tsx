@@ -279,25 +279,65 @@ export function Contact() {
 function SubmissionPage({ service }: { service?: Service[] }) {
   const isService = Boolean(service);
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [reference, setReference] = useState('');
+
+  function getSubmissionError(error: unknown) {
+    const response = (error as { response?: { status?: number; data?: { message?: string; errors?: Record<string, string[]> } } })?.response;
+    const validationErrors = response?.data?.errors
+      ? Object.values(response.data.errors).flat().filter(Boolean)
+      : [];
+
+    if (validationErrors.length) return validationErrors[0];
+    if (response?.status === 422) return 'Please check the highlighted information and try again.';
+    if (response?.status === 429) return 'Too many submissions were received. Please wait a moment and try again.';
+    if (response?.status && response.status >= 500) return 'We could not complete your submission right now. Please try again in a moment.';
+    if (response?.data?.message && !/server error|exception|query|sql|stack trace/i.test(response.data.message)) {
+      return response.data.message;
+    }
+    return isService
+      ? 'We could not send your service request. Please check your details and try again.'
+      : 'We could not send your message. Please check your details and try again.';
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus('sending');
-    const form = new FormData(event.currentTarget);
+    setFeedbackMessage('');
+    setReference('');
+
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const payload: Record<string, string> = {};
     form.forEach((value, key) => {
       payload[key] = String(value);
     });
 
     try {
-      if (isService) await portfolioApi.request(payload);
-      else await portfolioApi.message(payload);
-      event.currentTarget.reset();
+      const response = isService
+        ? await portfolioApi.request(payload)
+        : await portfolioApi.message(payload);
+
+      formElement.reset();
+      setReference(typeof response?.reference === 'string' ? response.reference : '');
+      setFeedbackMessage(
+        isService
+          ? 'Your service request has been received. I will review the details and get back to you.'
+          : 'Your message has been received. Thank you for reaching out — I will get back to you soon.'
+      );
       setStatus('success');
     } catch (error) {
       console.error('Submission failed:', error);
+      setFeedbackMessage(getSubmissionError(error));
       setStatus('error');
     }
+  }
+
+  function closeFeedback() {
+    if (status === 'sending') return;
+    setStatus('idle');
+    setFeedbackMessage('');
+    setReference('');
   }
 
   return (
@@ -341,19 +381,66 @@ function SubmissionPage({ service }: { service?: Service[] }) {
             <textarea name={isService ? 'description' : 'message'} rows={7} required />
           </Field>
 
-          {status === 'success' && (
-            <div className="form-status success"><CheckCircle2 size={18} /> Your submission has been received.</div>
-          )}
-          {status === 'error' && (
-            <div className="form-status error">Something went wrong. Please try again.</div>
-          )}
-
           <button className="button button-dark submit-button" disabled={status === 'sending'}>
             {status === 'sending' ? 'Sending…' : isService ? 'Submit service request' : 'Send message'}
             {status !== 'sending' && <Send size={16} />}
           </button>
         </form>
       </div>
+
+      {status !== 'idle' && status !== 'sending' && (
+        <div
+          className="public-feedback-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeFeedback();
+          }}
+        >
+          <section
+            className={`public-feedback-modal ${status === 'success' ? 'is-success' : 'is-error'}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="public-feedback-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="public-feedback-icon" aria-hidden="true">
+              {status === 'success' ? <CheckCircle2 size={28} /> : <span>!</span>}
+            </div>
+
+            <div className="public-feedback-copy">
+              <span className="public-feedback-eyebrow">
+                {status === 'success' ? 'SUBMISSION RECEIVED' : 'PLEASE CHECK'}
+              </span>
+              <h2 id="public-feedback-title">
+                {status === 'success'
+                  ? isService ? 'Request sent successfully.' : 'Message sent successfully.'
+                  : 'We could not send that yet.'}
+              </h2>
+              <p>{feedbackMessage}</p>
+
+              {reference && (
+                <div className="public-feedback-reference">
+                  <span>REQUEST REFERENCE</span>
+                  <strong>{reference}</strong>
+                </div>
+              )}
+            </div>
+
+            <button type="button" className="button button-dark public-feedback-close" onClick={closeFeedback}>
+              {status === 'success' ? 'Continue' : 'Try again'}
+            </button>
+
+            <button
+              type="button"
+              className="public-feedback-dismiss"
+              aria-label="Close message"
+              onClick={closeFeedback}
+            >
+              ×
+            </button>
+          </section>
+        </div>
+      )}
     </Page>
   );
 }

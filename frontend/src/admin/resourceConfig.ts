@@ -36,7 +36,9 @@ export const resourceConfigs: ResourceConfig[] = [
       { key: 'professional_summary', label: 'Professional summary', type: 'textarea' },
       { key: 'email', label: 'Email', type: 'email' }, { key: 'phone', label: 'Phone' },
       { key: 'location', label: 'Location' }, { key: 'availability_status', label: 'Availability status' },
-      { key: 'availability_text', label: 'Availability text' }, { key: 'is_active', label: 'Active', type: 'checkbox' },
+      { key: 'availability_text', label: 'Availability text' },
+      { key: 'cv_file', label: 'CV document', type: 'file', accept: '.pdf,.doc,.docx' },
+      { key: 'is_active', label: 'Active', type: 'checkbox' },
     ],
   },
   {

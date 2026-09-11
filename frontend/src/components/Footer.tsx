@@ -23,6 +23,8 @@ export default function Footer() {
             <Link to="/services">Services <ArrowUpRight size={14} /></Link>
             <Link to="/cv">CV <ArrowUpRight size={14} /></Link>
             <Link to="/contact">Contact <ArrowUpRight size={14} /></Link>
+            <a href="https://github.com/Flevian11" target="_blank" rel="noreferrer">GitHub <ArrowUpRight size={14} /></a>
+            <a href="https://www.reddit.com/user/Budget_Background713/" target="_blank" rel="noreferrer">Reddit <ArrowUpRight size={14} /></a>
           </div>
         </div>
 

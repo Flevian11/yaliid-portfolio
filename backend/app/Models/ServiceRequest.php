@@ -3,6 +3,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['service_id', 'reference', 'name', 'email', 'phone', 'company', 'description', 'budget', 'preferred_deadline', 'status', 'priority', 'admin_notes'])]
 class ServiceRequest extends Model

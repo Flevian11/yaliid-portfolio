@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import { portfolioApi } from './api';
@@ -26,6 +26,16 @@ function normalizePortfolio(payload: Partial<PortfolioData> | null | undefined):
     advertisements: Array.isArray(payload?.advertisements) ? payload.advertisements : [],
     testimonials: Array.isArray(payload?.testimonials) ? payload.testimonials : [],
   };
+}
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [pathname]);
+
+  return null;
 }
 
 function PublicLayout({ data }: { data: PortfolioData }) {
@@ -92,6 +102,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route path="/admin/*" element={<AdminRoutes />} />
         <Route
