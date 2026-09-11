@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Certification;
+use App\Services\AdminDisplayOrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -12,11 +13,11 @@ class CertificationController extends Controller
     public function index()
     {
         return response()->json(
-            Certification::query()->latest()->paginate(50)
+            Certification::query()->orderBy('display_order')->orderByDesc('id')->paginate(50)
         );
     }
 
-    public function store(Request $request)
+    public function store(Request $request, AdminDisplayOrderService $orderService)
     {
         $data = $request->validate([
             'name' => 'required|string|max:190',
@@ -27,29 +28,15 @@ class CertificationController extends Controller
             'expiry_date' => 'nullable|date|after_or_equal:issue_date',
             'does_not_expire' => 'boolean',
             'description' => 'nullable|string',
-            'display_order' => 'nullable|integer',
             'is_published' => 'boolean',
             'certificate_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
-        if ($request->hasFile('certificate_file')) {
-            $file = $request->file('certificate_file');
-
-            $data['certificate_file'] = $file->store(
-                'certificates',
-                'public'
-            );
-        }
-
-        unset($data['certificate_file']);
+        $data['display_order'] = $orderService->assignNext(new Certification());
 
         if ($request->hasFile('certificate_file')) {
-            $file = $request->file('certificate_file');
-
-            $data['certificate_file'] = $file->store(
-                'certificates',
-                'public'
-            );
+            $data['certificate_file'] = $request->file('certificate_file')
+                ->store('certificates', 'public');
         }
 
         $item = Certification::create($data);
@@ -59,9 +46,7 @@ class CertificationController extends Controller
 
     public function show($id)
     {
-        return response()->json(
-            Certification::findOrFail($id)
-        );
+        return response()->json(Certification::findOrFail($id));
     }
 
     public function update(Request $request, $id)
@@ -77,7 +62,6 @@ class CertificationController extends Controller
             'expiry_date' => 'nullable|date|after_or_equal:issue_date',
             'does_not_expire' => 'boolean',
             'description' => 'nullable|string',
-            'display_order' => 'nullable|integer',
             'is_published' => 'boolean',
             'certificate_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'remove_certificate_file' => 'boolean',

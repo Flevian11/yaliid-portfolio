@@ -66,8 +66,8 @@ function NotFound() {
 function AdminRoutes() {
   return (
     <Routes>
-      <Route path="/admin/login" element={<AdminLogin />} />
-      <Route path="/admin/*" element={<AdminApp />} />
+      <Route path="login" element={<AdminLogin />} />
+      <Route path="*" element={<AdminApp />} />
     </Routes>
   );
 }

@@ -1,6 +1,63 @@
-import {useEffect,useState} from 'react'; import {NavLink,Route,Routes,useNavigate} from 'react-router-dom'; import {LayoutDashboard,BriefcaseBusiness,FolderKanban,Inbox,Settings,LogOut,Menu,X} from 'lucide-react'; import {api} from '../api'
-const items=[['Dashboard','/admin',LayoutDashboard],['Experience','/admin/experience',BriefcaseBusiness],['Projects','/admin/projects',FolderKanban],['Requests','/admin/requests',Inbox],['Messages','/admin/messages',Inbox],['Settings','/admin/settings',Settings]] as const
-export default function AdminApp(){const[open,setOpen]=useState(false);const nav=useNavigate();const[me,setMe]=useState<any>();useEffect(()=>{api.get('/auth/me').then(r=>setMe(r.data)).catch(()=>nav('/admin/login'))},[]);if(!me)return <div className="admin-loading">TechGhost Admin</div>;return <div className="admin-shell"><aside className={open?'show':''}><div className="admin-brand">Tech<span>Ghost</span><small>ADMIN</small></div>{items.map(([n,p,I])=><NavLink onClick={()=>setOpen(false)} className={({isActive})=>isActive?'active':''} to={p} end={p==='/admin'} key={p}><I size={17}/>{n}</NavLink>)}<button onClick={async()=>{await api.post('/auth/logout');nav('/admin/login')}}><LogOut size={17}/>Logout</button></aside><div className="admin-main"><button className="admin-menu" onClick={()=>setOpen(!open)}>{open?<X/>:<Menu/>}</button><Routes><Route path="/" element={<Dashboard/>}/><Route path="/experience" element={<Manager title="Experience"/>}/><Route path="/projects" element={<Manager title="Projects"/>}/><Route path="/requests" element={<Manager title="Service Requests"/>}/><Route path="/messages" element={<Manager title="Messages"/>}/><Route path="/settings" element={<Manager title="Settings"/>}/></Routes></div></div>}
-function Dashboard(){const[d,setD]=useState<any>();useEffect(()=>{api.get('/admin/dashboard').then(r=>setD(r.data))},[]);return <section className="admin-page"><div className="admin-top"><div><small>OVERVIEW</small><h1>Dashboard</h1></div></div><div className="stat-grid">{Object.entries(d?.counts||{}).map(([k,v])=><div className="stat" key={k}><small>{k.replace('_',' ')}</small><b>{v as any}</b></div>)}</div><div className="admin-panel"><h2>Recent service requests</h2>{d?.recent_requests?.map((x:any)=><div className="admin-row" key={x.id}><b>{x.reference}</b><span>{x.name}</span><em>{x.status}</em></div>)}</div></section>}
-function Manager({title}:{title:string}){return <section className="admin-page"><div className="admin-top"><div><small>CONTENT MANAGEMENT</small><h1>{title}</h1></div><button className="admin-action">+ Add new</button></div><div className="admin-panel"><p className="muted">This module is API-ready. Connect its form/table to the corresponding resource endpoint.</p></div></section>}
-export function AdminLogin(){const[email,setEmail]=useState('');const[p,setP]=useState('');const[error,setError]=useState('');const nav=useNavigate();return <main className="login"><form onSubmit={async e=>{e.preventDefault();try{await api.get('/sanctum/csrf-cookie').catch(()=>{});await api.post('/auth/login',{email,password:p});nav('/admin')}catch{setError('Invalid credentials.')}}}><b>Tech<span>Ghost</span></b><small>TECHGHOST / ADMIN PORTAL</small><h1>Welcome back.</h1><input value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email" type="email" required/><input value={p} onChange={e=>setP(e.target.value)} placeholder="Password" type="password" required/><button className="btn primary">Sign in ↗</button>{error&&<p>{error}</p>}</form></main>}
+import { useEffect, useState } from 'react';
+import { Route, Routes, useNavigate } from 'react-router-dom';
+import { api } from '../api';
+import AdminShell from './components/AdminShell';
+import Dashboard from './pages/Dashboard';
+import ResourcePage from './pages/ResourcePage';
+import { resourceConfigs } from './resourceConfig';
+import InboxPages from './pages/InboxPages';
+import SecurityPage from './pages/SecurityPage';
+import LoginPage from './pages/LoginPage';
+import './Admin.css';
+
+export default function AdminApp() {
+  const [me, setMe] = useState<any>(null);
+  const [checking, setChecking] = useState(true);
+  const nav = useNavigate();
+
+  useEffect(() => {
+    let active = true;
+    api.get('/auth/me')
+      .then((response) => {
+        if (active) setMe(response.data);
+      })
+      .catch(() => {
+        if (active) nav('/admin/login', { replace: true });
+      })
+      .finally(() => {
+        if (active) setChecking(false);
+      });
+    return () => { active = false; };
+  }, [nav]);
+
+  if (checking) {
+    return (
+      <div className="admin-loading">
+        <div className="admin-loading__mark">TG</div>
+        <span>Authenticating workspace…</span>
+      </div>
+    );
+  }
+
+  if (!me) return null;
+
+  return (
+    <AdminShell user={me}>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        {resourceConfigs.map((config) => (
+          <Route
+            key={config.key}
+            path={`/${config.key}`}
+            element={<ResourcePage config={config} />}
+          />
+        ))}
+        <Route path="/requests" element={<InboxPages mode="requests" />} />
+        <Route path="/messages" element={<InboxPages mode="messages" />} />
+        <Route path="/security" element={<SecurityPage />} />
+      </Routes>
+    </AdminShell>
+  );
+}
+
+export { LoginPage as AdminLogin };
