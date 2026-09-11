@@ -11,6 +11,7 @@ export type Field = {
   required?: boolean;
   options?: string[];
   accept?: string;
+  optionsEndpoint?: string;
 };
 
 export type ResourceConfig = {
@@ -22,6 +23,7 @@ export type ResourceConfig = {
   fields: Field[];
   fileField?: string;
   createDisabled?: boolean;
+  removableFile?: boolean;
 };
 
 export const resourceConfigs: ResourceConfig[] = [
@@ -80,7 +82,7 @@ export const resourceConfigs: ResourceConfig[] = [
     key: 'recommendation-letters', title: 'Recommendation Letters', singular: 'recommendation letter',
     endpoint: '/admin/recommendation-letters', icon: FileText, fileField: 'file',
     fields: [
-      { key: 'experience_id', label: 'Experience ID', type: 'number' }, { key: 'title', label: 'Title', required: true },
+      { key: 'experience_id', label: 'Experience', type: 'select', required: true, optionsEndpoint: '/admin/options/experiences' }, { key: 'title', label: 'Title', required: true },
       { key: 'issuer_name', label: 'Issuer name' }, { key: 'issuer_position', label: 'Issuer position' },
       { key: 'issuer_organization', label: 'Issuer organization' }, { key: 'issue_date', label: 'Issue date', type: 'date' },
       { key: 'description', label: 'Description', type: 'textarea' }, { key: 'is_published', label: 'Published', type: 'checkbox' },
@@ -103,15 +105,15 @@ export const resourceConfigs: ResourceConfig[] = [
   {
     key: 'services', title: 'Services', singular: 'service', endpoint: '/admin/services', icon: Wrench,
     fields: [
-      { key: 'name', label: 'Name', required: true }, { key: 'slug', label: 'Slug', required: true },
+      { key: 'name', label: 'Name', required: true },
       { key: 'short_description', label: 'Short description', type: 'textarea' }, { key: 'description', label: 'Description', type: 'textarea' },
-      { key: 'icon', label: 'Icon' }, { key: 'is_featured', label: 'Featured', type: 'checkbox' }, { key: 'is_published', label: 'Published', type: 'checkbox' },
+      { key: 'icon', label: 'Icon', type: 'select', options: ['Code2','Monitor','Globe2','Database','Smartphone','ShoppingCart','Palette','Server','ShieldCheck','Zap','Wrench','Settings','GraduationCap','BriefcaseBusiness','BarChart3','Sparkles'] }, { key: 'is_featured', label: 'Featured', type: 'checkbox' }, { key: 'is_published', label: 'Published', type: 'checkbox' },
     ],
   },
   {
     key: 'skills', title: 'Skills', singular: 'skill', endpoint: '/admin/skills', icon: Settings,
     fields: [
-      { key: 'skill_category_id', label: 'Skill category ID', type: 'number', required: true }, { key: 'name', label: 'Name', required: true },
+      { key: 'skill_category_id', label: 'Skill category', type: 'select', required: true, optionsEndpoint: '/admin/options/skill-categories' }, { key: 'name', label: 'Name', required: true },
       { key: 'description', label: 'Description', type: 'textarea' }, { key: 'proficiency', label: 'Proficiency (%)', type: 'number' },
       { key: 'is_featured', label: 'Featured', type: 'checkbox' }, { key: 'is_published', label: 'Published', type: 'checkbox' },
     ],
@@ -120,7 +122,7 @@ export const resourceConfigs: ResourceConfig[] = [
     key: 'achievements', title: 'Achievements', singular: 'achievement', endpoint: '/admin/achievements',
     icon: Award,
     fields: [
-      { key: 'experience_id', label: 'Experience ID', type: 'number' },
+      { key: 'experience_id', label: 'Experience', type: 'select', optionsEndpoint: '/admin/options/experiences' },
       { key: 'title', label: 'Title', required: true },
       { key: 'description', label: 'Description', type: 'textarea' },
       { key: 'is_published', label: 'Published', type: 'checkbox' },
@@ -128,13 +130,13 @@ export const resourceConfigs: ResourceConfig[] = [
   },
   {
     key: 'testimonials', title: 'Testimonials', singular: 'testimonial', endpoint: '/admin/testimonials',
-    icon: MessageSquare,
+    icon: MessageSquare, fileField: 'photo',
     fields: [
       { key: 'name', label: 'Name', required: true },
       { key: 'organization', label: 'Organization' },
       { key: 'position', label: 'Position' },
       { key: 'content', label: 'Testimonial', type: 'textarea', required: true },
-      { key: 'photo', label: 'Photo path' },
+      { key: 'photo', label: 'Photo', type: 'file', accept: '.jpg,.jpeg,.png,.webp' },
       { key: 'rating', label: 'Rating', type: 'number' },
       { key: 'is_featured', label: 'Featured', type: 'checkbox' },
       { key: 'is_published', label: 'Published', type: 'checkbox' },
@@ -142,11 +144,11 @@ export const resourceConfigs: ResourceConfig[] = [
   },
   {
     key: 'advertisements', title: 'Advertisements', singular: 'advertisement', endpoint: '/admin/advertisements',
-    icon: Sparkles,
+    icon: Sparkles, fileField: 'image_path', removableFile: false,
     fields: [
       { key: 'title', label: 'Title', required: true },
       { key: 'description', label: 'Description', type: 'textarea' },
-      { key: 'image_path', label: 'Image path' },
+      { key: 'image_path', label: 'Advertisement image', type: 'file', accept: '.jpg,.jpeg,.png,.webp' },
       { key: 'destination_url', label: 'Destination URL', type: 'url' },
       { key: 'position', label: 'Position' },
       { key: 'start_at', label: 'Start date & time', type: 'text' },

@@ -22,6 +22,8 @@ Route::prefix('v1')->group(function () {
 
     Route::middleware(['web', 'auth', 'admin'])->prefix('admin')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\Api\Admin\DashboardController::class, '__invoke']);
+        Route::get('/options/experiences', [\App\Http\Controllers\Api\Admin\AdminOptionsController::class, 'experiences']);
+        Route::get('/options/skill-categories', [\App\Http\Controllers\Api\Admin\AdminOptionsController::class, 'skillCategories']);
         Route::apiResource('profile', \App\Http\Controllers\Api\Admin\ProfileController::class)->only(['index', 'store', 'show', 'update']);
         Route::apiResource('experiences', \App\Http\Controllers\Api\Admin\ExperienceController::class);
         Route::apiResource('achievements', \App\Http\Controllers\Api\Admin\AchievementController::class);

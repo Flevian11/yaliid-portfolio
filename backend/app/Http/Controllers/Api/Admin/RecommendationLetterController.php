@@ -21,7 +21,7 @@ class RecommendationLetterController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'experience_id' => 'nullable|exists:experiences,id',
+            'experience_id' => 'required|exists:experiences,id',
             'title' => 'required|string|max:190',
             'issuer_name' => 'nullable|string|max:150',
             'issuer_position' => 'nullable|string|max:150',

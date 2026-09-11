@@ -95,12 +95,46 @@ function RecordRow({ row, config, onEdit, onDelete }: { row:any; config:Resource
 }
 
 function EditorModal({ config, item, onClose, onSaved }: { config:ResourceConfig; item:any|null; onClose:()=>void; onSaved:()=>void }) {
-  const initial = useMemo(() => Object.fromEntries(config.fields.filter(f => f.type !== 'file').map(f => [f.key, item?.[f.key] ?? (f.type === 'checkbox' ? false : '')])), [config, item]);
+  const initial = useMemo(
+    () => Object.fromEntries(
+      config.fields
+        .filter(f => f.type !== 'file')
+        .map(f => [f.key, item?.[f.key] ?? (f.type === 'checkbox' ? false : '')])
+    ),
+    [config, item]
+  );
   const [form, setForm] = useState<any>(initial);
   const [files, setFiles] = useState<Record<string, File|undefined>>({});
   const [removeFile, setRemoveFile] = useState(false);
+  const [lookupOptions, setLookupOptions] = useState<Record<string, { value:string|number; label:string }[]>>({});
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const fields = config.fields.filter(field => field.type === 'select' && field.optionsEndpoint);
+    if (!fields.length) {
+      setLookupOptions({});
+      return;
+    }
+
+    Promise.all(fields.map(async field => {
+      const response = await api.get(field.optionsEndpoint!);
+      const values = rowsFrom(response.data).map((option:any) => ({
+        value: option.value ?? option.id,
+        label: option.label ?? option.name ?? option.title ?? String(option.id),
+      }));
+      return [field.key, values] as const;
+    }))
+      .then(entries => {
+        if (active) setLookupOptions(Object.fromEntries(entries));
+      })
+      .catch(() => {
+        if (active) setFeedback('Some selection options could not be loaded. Please close and reopen this form.');
+      });
+
+    return () => { active = false; };
+  }, [config]);
 
   const set = (key:string, value:any) => setForm((old:any) => ({...old, [key]:value}));
 
@@ -111,17 +145,27 @@ function EditorModal({ config, item, onClose, onSaved }: { config:ResourceConfig
       if (hasFiles || config.fileField) {
         const fd = new FormData();
         Object.entries(form).forEach(([key,value]) => {
-          if (value !== '' && value !== null && value !== undefined) fd.append(key, typeof value === 'boolean' ? (value ? '1':'0') : String(value));
+          if (value !== '' && value !== null && value !== undefined) {
+            fd.append(key, typeof value === 'boolean' ? (value ? '1':'0') : String(value));
+          }
         });
         Object.entries(files).forEach(([key,file]) => { if (file) fd.append(key,file); });
-        if (removeFile && config.fileField) fd.append(config.fileField === 'certificate_file' ? 'remove_certificate_file' : 'remove_file', '1');
+        if (removeFile && config.fileField) {
+          fd.append(config.fileField === 'certificate_file' ? 'remove_certificate_file' : 'remove_file', '1');
+        }
         if (item) fd.append('_method','PUT');
         await api.post(item ? `${config.endpoint}/${item.id}` : config.endpoint, fd, {headers:{'Content-Type':'multipart/form-data'}});
-      } else if (item) await api.put(`${config.endpoint}/${item.id}`, form);
-      else await api.post(config.endpoint, form);
+      } else if (item) {
+        await api.put(`${config.endpoint}/${item.id}`, form);
+      } else {
+        await api.post(config.endpoint, form);
+      }
       await onSaved();
-    } catch (e:any) { setFeedback(errorMessage(e,'Could not save these changes.')); }
-    finally { setSaving(false); }
+    } catch (e:any) {
+      setFeedback(errorMessage(e,'Could not save these changes.'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -132,11 +176,33 @@ function EditorModal({ config, item, onClose, onSaved }: { config:ResourceConfig
           <div><small>{item ? 'EDIT RECORD' : 'NEW RECORD'}</small><h2>{item ? 'Edit' : 'Add'} {config.singular}</h2><p>Update the information used by the public portfolio.</p></div>
           <button className="modal-close" onClick={onClose} aria-label="Close">×</button>
         </div>
-        
+
         <form className="admin-form" onSubmit={submit}>
-          <div className="form-grid">{config.fields.map(field => <FieldInput key={field.key} field={field} value={form[field.key]} onChange={v=>set(field.key,v)} existingFile={item?.[field.key]} onFile={file=>setFiles(old=>({...old,[field.key]:file}))}/>)}</div>
-          {item && config.fileField && (item[config.fileField] || item.file_name) && <label className="remove-file"><input type="checkbox" checked={removeFile} onChange={e=>setRemoveFile(e.target.checked)}/> Remove current document</label>}
-          <div className="modal-actions"><button type="button" className="admin-button secondary" onClick={onClose}>Cancel</button><button type="submit" className="admin-button primary" disabled={saving}>{saving ? <><span className="button-spinner"/> Saving…</> : 'Save changes'}</button></div>
+          <div className="form-grid">
+            {config.fields.map(field => (
+              <FieldInput
+                key={field.key}
+                field={field}
+                value={form[field.key]}
+                onChange={v=>set(field.key,v)}
+                existingFile={item?.[field.key]}
+                onFile={file=>setFiles(old=>({...old,[field.key]:file}))}
+                lookupOptions={lookupOptions[field.key] || []}
+              />
+            ))}
+          </div>
+          {item && config.fileField && config.removableFile !== false && (item[config.fileField] || item.file_name) && (
+            <label className="remove-file">
+              <input type="checkbox" checked={removeFile} onChange={e=>setRemoveFile(e.target.checked)}/>
+              Remove current file
+            </label>
+          )}
+          <div className="modal-actions">
+            <button type="button" className="admin-button secondary" onClick={onClose}>Cancel</button>
+            <button type="submit" className="admin-button primary" disabled={saving}>
+              {saving ? <><span className="button-spinner"/> Saving…</> : 'Save changes'}
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -145,9 +211,52 @@ function EditorModal({ config, item, onClose, onSaved }: { config:ResourceConfig
   );
 }
 
-function FieldInput({field,value,onChange,onFile,existingFile}:{field:Field;value:any;onChange:(v:any)=>void;onFile:(f?:File)=>void;existingFile?:string}) {
-  if (field.type === 'checkbox') return <label className="check-field"><input type="checkbox" checked={Boolean(value)} onChange={e=>onChange(e.target.checked)}/><span>{field.label}</span></label>;
-  if (field.type === 'file') return <label className="field"><span>{field.label}</span>{existingFile && <small className="existing-file">Current: {String(existingFile).split('/').pop()}</small>}<input type="file" accept={field.accept} onChange={e=>onFile(e.target.files?.[0])}/></label>;
-  if (field.type === 'textarea') return <label className="field wide"><span>{field.label}</span><textarea value={value ?? ''} required={field.required} onChange={e=>onChange(e.target.value)} rows={5}/></label>;
+function FieldInput({
+  field,
+  value,
+  onChange,
+  onFile,
+  existingFile,
+  lookupOptions = [],
+}: {
+  field:Field;
+  value:any;
+  onChange:(v:any)=>void;
+  onFile:(f?:File)=>void;
+  existingFile?:string;
+  lookupOptions?:{value:string|number;label:string}[];
+}) {
+  if (field.type === 'checkbox') {
+    return <label className="check-field"><input type="checkbox" checked={Boolean(value)} onChange={e=>onChange(e.target.checked)}/><span>{field.label}</span></label>;
+  }
+
+  if (field.type === 'file') {
+    return (
+      <label className="field">
+        <span>{field.label}</span>
+        {existingFile && <small className="existing-file">Current: {String(existingFile).split('/').pop()}</small>}
+        <input type="file" accept={field.accept} onChange={e=>onFile(e.target.files?.[0])}/>
+      </label>
+    );
+  }
+
+  if (field.type === 'textarea') {
+    return <label className="field wide"><span>{field.label}</span><textarea value={value ?? ''} required={field.required} onChange={e=>onChange(e.target.value)} rows={5}/></label>;
+  }
+
+  if (field.type === 'select') {
+    const options = field.optionsEndpoint ? lookupOptions : (field.options || []).map(option => ({value: option, label: option}));
+    return (
+      <label className="field">
+        <span>{field.label}</span>
+        <select value={value ?? ''} required={field.required} onChange={e=>onChange(e.target.value === '' ? '' : e.target.value)}>
+          {!field.required && <option value="">Not specified</option>}
+          {field.required && !value && <option value="">Select {field.label.toLowerCase()}</option>}
+          {options.map(option => <option key={String(option.value)} value={String(option.value)}>{option.label}</option>)}
+        </select>
+      </label>
+    );
+  }
+
   return <label className="field"><span>{field.label}</span><input type={field.type || 'text'} value={field.type==='date' ? dateValue(value) : value ?? ''} required={field.required} onChange={e=>onChange(field.type==='number' ? (e.target.value===''?'':Number(e.target.value)) : e.target.value)}/></label>;
 }

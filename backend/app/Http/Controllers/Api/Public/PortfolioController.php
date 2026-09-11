@@ -25,8 +25,18 @@ class PortfolioController extends Controller
             'skills' => SkillCategory::with(['skills'=>fn($q)=>$q->where('is_published',true)->orderBy('display_order')])->where('is_published',true)->orderBy('display_order')->get(),
             'projects' => Project::with(['features','links','media','technologies'])->where('is_published',true)->orderBy('display_order')->get(),
             'services' => Service::where('is_published',true)->orderBy('display_order')->get(),
-            'advertisements' => Advertisement::where('is_active',true)->orderBy('display_order')->get(),
-            'testimonials' => Testimonial::where('is_published',true)->orderBy('display_order')->get(),
+            'advertisements' => Advertisement::where('is_active',true)->orderBy('display_order')->get()->map(function ($advertisement) {
+                if ($advertisement->image_path && !str_starts_with($advertisement->image_path, 'http')) {
+                    $advertisement->image_path = Storage::disk('public')->url($advertisement->image_path);
+                }
+                return $advertisement;
+            }),
+            'testimonials' => Testimonial::where('is_published',true)->orderBy('display_order')->get()->map(function ($testimonial) {
+                if ($testimonial->photo && !str_starts_with($testimonial->photo, 'http')) {
+                    $testimonial->photo = Storage::disk('public')->url($testimonial->photo);
+                }
+                return $testimonial;
+            }),
         ]);
     }
 
