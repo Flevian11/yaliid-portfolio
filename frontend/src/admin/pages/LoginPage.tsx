@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+﻿import { useState, type FormEvent } from 'react';
 import { Eye, EyeOff, KeyRound, ShieldCheck, XCircle, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../api';
@@ -17,7 +17,6 @@ export default function LoginPage() {
     setError('');
 
     try {
-      await api.get('/auth/me');
       await api.post('/auth/login', { key: key.trim() });
       await api.get('/auth/me');
       nav('/admin', { replace: true });
@@ -115,7 +114,7 @@ export default function LoginPage() {
 
             <button className="login-submit" disabled={loading || !key.trim()}>
               {loading ? (
-                <><span className="button-spinner" /> Authenticating…</>
+                <><span className="button-spinner" /> Authenticatingâ€¦</>
               ) : (
                 <>Enter admin portal <ArrowRight size={17} /></>
               )}
@@ -131,3 +130,4 @@ export default function LoginPage() {
     </main>
   );
 }
+
